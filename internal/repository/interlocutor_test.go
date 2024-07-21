@@ -4,18 +4,15 @@ import (
 	"AnonimousChat/internal/data"
 	"AnonimousChat/internal/repository"
 	"errors"
-	"math/rand"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
+	sqlmock "github.com/DATA-DOG/go-sqlmock"
 )
 
 var columnsTable = []string{
 	"tag",
 	"source",
 	"id",
-	"self_gender",
-	"target_gender",
 	"count_connections",
 	"sum_donation",
 }
@@ -28,16 +25,16 @@ var (
 )
 
 var testCases = []data.Interlocutor{
-	{Tag: "example1", Source: "source1", ID: 1001, SelfGender: 1, TargetGender: 2, CountConnections: 5, SumDonation: 50},
-	{Tag: "example2", Source: "source2", ID: 1002, SelfGender: 2, TargetGender: 1, CountConnections: 15, SumDonation: 100},
-	{Tag: "example3", Source: "source3", ID: 1003, SelfGender: 1, TargetGender: 1, CountConnections: 20, SumDonation: 200},
-	{Tag: "example4", Source: "source4", ID: 1004, SelfGender: 2, TargetGender: 2, CountConnections: 10, SumDonation: 150},
-	{Tag: "example5", Source: "source5", ID: 1005, SelfGender: 1, TargetGender: 2, CountConnections: 25, SumDonation: 300},
-	{Tag: "example6", Source: "source6", ID: 1006, SelfGender: 2, TargetGender: 1, CountConnections: 30, SumDonation: 400},
-	{Tag: "example7", Source: "source7", ID: 1007, SelfGender: 1, TargetGender: 1, CountConnections: 35, SumDonation: 500},
-	{Tag: "example8", Source: "source8", ID: 1008, SelfGender: 2, TargetGender: 2, CountConnections: 40, SumDonation: 600},
-	{Tag: "example9", Source: "source9", ID: 1009, SelfGender: 1, TargetGender: 2, CountConnections: 45, SumDonation: 700},
-	{Tag: "example10", Source: "source10", ID: 1010, SelfGender: 2, TargetGender: 1, CountConnections: 50, SumDonation: 800},
+	{Tag: "example1", Source: "source1", ID: 1001, CountConnections: 5, SumDonation: 50},
+	{Tag: "example2", Source: "source2", ID: 1002, CountConnections: 15, SumDonation: 100},
+	{Tag: "example3", Source: "source3", ID: 1003, CountConnections: 20, SumDonation: 200},
+	{Tag: "example4", Source: "source4", ID: 1004, CountConnections: 10, SumDonation: 150},
+	{Tag: "example5", Source: "source5", ID: 1005, CountConnections: 25, SumDonation: 300},
+	{Tag: "example6", Source: "source6", ID: 1006, CountConnections: 30, SumDonation: 400},
+	{Tag: "example7", Source: "source7", ID: 1007, CountConnections: 35, SumDonation: 500},
+	{Tag: "example8", Source: "source8", ID: 1008, CountConnections: 40, SumDonation: 600},
+	{Tag: "example9", Source: "source9", ID: 1009, CountConnections: 45, SumDonation: 700},
+	{Tag: "example10", Source: "source10", ID: 1010, CountConnections: 50, SumDonation: 800},
 }
 
 func TestErrorMigrationInterlocutorTable(t *testing.T) {
@@ -90,8 +87,6 @@ func TestSuccessfulRegistration(t *testing.T) {
 				test.Tag,
 				test.Source,
 				test.ID,
-				test.SelfGender,
-				test.TargetGender,
 				test.CountConnections,
 				test.SumDonation,
 			).
@@ -119,8 +114,6 @@ func TestErrorRegistration(t *testing.T) {
 				test.Tag,
 				test.Source,
 				test.ID,
-				test.SelfGender,
-				test.TargetGender,
 				test.CountConnections,
 				test.SumDonation,
 			).
@@ -172,8 +165,6 @@ func TestGetInterlocutor(t *testing.T) {
 			test.Tag,
 			test.Source,
 			test.ID,
-			test.SelfGender,
-			test.TargetGender,
 			test.CountConnections,
 			test.SumDonation,
 		)
@@ -193,118 +184,6 @@ func TestGetInterlocutor(t *testing.T) {
 
 		if test != user {
 			t.Errorf("%v != %v\n", test, user)
-		}
-	}
-}
-
-func TestErrorChangeSelfGender(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error create mock, error: %v", err)
-	}
-
-	repo := repository.NewInterlocutorRepository(db)
-
-	var randomGender data.GenderID
-
-	for _, test := range testCases {
-		randomGender = data.GenderID(rand.Intn(3))
-
-		mock.ExpectExec(`UPDATE interlocutor SET self_gender`).
-			WithArgs(
-				test.Tag,
-				randomGender,
-			).
-			WillReturnResult(emptyResult).
-			WillReturnError(testError)
-
-		err = repo.ChangeSelfGender(test.Tag, randomGender)
-		if err != testError {
-			t.Errorf("Expected test error, got: %v\ntest data: %v\n", err, test)
-		}
-	}
-}
-
-func TestSuccessfulChangeSelfGender(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error create mock, error: %v", err)
-	}
-
-	repo := repository.NewInterlocutorRepository(db)
-
-	var randomGender data.GenderID
-
-	for _, test := range testCases {
-		randomGender = data.GenderID(rand.Intn(3))
-
-		mock.ExpectExec(`UPDATE interlocutor SET self_gender`).
-			WithArgs(
-				test.Tag,
-				randomGender,
-			).
-			WillReturnResult(emptyResult).
-			WillReturnError(nil)
-
-		err = repo.ChangeSelfGender(test.Tag, randomGender)
-		if err != nil {
-			t.Errorf("Expected nil got: %v\ntest data: %v\n", err, test)
-		}
-	}
-}
-
-func TestErrorChangeTargetGender(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error create mock, error: %v", err)
-	}
-
-	repo := repository.NewInterlocutorRepository(db)
-
-	var randomGender data.GenderID
-
-	for _, test := range testCases {
-		randomGender = data.GenderID(rand.Intn(3))
-
-		mock.ExpectExec(`UPDATE interlocutor SET target_gender`).
-			WithArgs(
-				test.Tag,
-				randomGender,
-			).
-			WillReturnResult(emptyResult).
-			WillReturnError(testError)
-
-		err = repo.ChangeTargetGender(test.Tag, randomGender)
-		if err != testError {
-			t.Errorf("Expected test error, got: %v\ntest data: %v\n", err, test)
-		}
-	}
-}
-
-func TestSuccessfulChangeTargetGender(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("Error create mock, error: %v", err)
-	}
-
-	repo := repository.NewInterlocutorRepository(db)
-
-	var randomGender data.GenderID
-
-	for _, test := range testCases {
-		randomGender = data.GenderID(rand.Intn(3))
-
-		mock.ExpectExec(`UPDATE interlocutor SET target_gender`).
-			WithArgs(
-				test.Tag,
-				randomGender,
-			).
-			WillReturnResult(emptyResult).
-			WillReturnError(nil)
-
-		err = repo.ChangeTargetGender(test.Tag, randomGender)
-		if err != nil {
-			t.Errorf("Expected nil got: %v\ntest data: %v\n", err, test)
 		}
 	}
 }

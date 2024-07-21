@@ -11,8 +11,6 @@ type InterlocutorRepository interface {
 	Registration(user data.Interlocutor) error
 	GetInterlocutor(tag data.TagID) (data.Interlocutor, error)
 
-	ChangeSelfGender(tag data.TagID, gender data.GenderID) error
-	ChangeTargetGender(tag data.TagID, gender data.GenderID) error
 	AddCountConnections(tag data.TagID) error
 	AddSumDonation(tag data.TagID, sum int) error
 }
@@ -33,8 +31,6 @@ func (r *interlocutorRepository) MigrationInterlocutorTable() error {
 		tag VARCHAR PRIMARY KEY,
 		source VARCHAR NOT NULL,
 		id INTEGER NOT NULL,
-		self_gender INTEGER NOT NULL,
-		target_gender INTEGER NOT NULL,
 		count_connections INTEGER NOT NULL,
 		sum_donation INTEGER NOT NULL
 	);
@@ -45,12 +41,10 @@ func (r *interlocutorRepository) MigrationInterlocutorTable() error {
 
 func (r *interlocutorRepository) Registration(user data.Interlocutor) error {
 	_, err := r.db.Exec(
-		`INSERT INTO interlocutor VALUES($1, $2, $3, $4, $5, $6, $7);`,
+		`INSERT INTO interlocutor VALUES($1, $2, $3, $4, $5);`,
 		user.Tag,
 		user.Source,
 		user.ID,
-		user.SelfGender,
-		user.TargetGender,
 		user.CountConnections,
 		user.SumDonation,
 	)
@@ -72,26 +66,18 @@ func (r *interlocutorRepository) GetInterlocutor(tag data.TagID) (data.Interlocu
 		&user.Tag,
 		&user.Source,
 		&user.ID,
-		&user.SelfGender,
-		&user.TargetGender,
 		&user.CountConnections,
 		&user.SumDonation,
 	)
 
 	return user, err
 }
-func (r *interlocutorRepository) ChangeSelfGender(tag data.TagID, gender data.GenderID) error {
-	_, err := r.db.Exec(`UPDATE interlocutor SET self_gender = $2 WHERE tag = $1`, tag, gender)
-	return err
-}
-func (r *interlocutorRepository) ChangeTargetGender(tag data.TagID, gender data.GenderID) error {
-	_, err := r.db.Exec(`UPDATE interlocutor SET target_gender = $2 WHERE tag = $1`, tag, gender)
-	return err
-}
+
 func (r *interlocutorRepository) AddCountConnections(tag data.TagID) error {
 	_, err := r.db.Exec(`UPDATE interlocutor SET count_connections = count_connections+1 WHERE tag = $1`, tag)
 	return err
 }
+
 func (r *interlocutorRepository) AddSumDonation(tag data.TagID, sum int) error {
 	_, err := r.db.Exec(`UPDATE interlocutor SET sum_donation = sum_donation + $2 WHERE tag = $1`, tag, sum)
 	return err

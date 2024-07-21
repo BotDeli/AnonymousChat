@@ -11,19 +11,15 @@ type Interlocutor struct {
 	Tag              TagID
 	Source           SourceID
 	ID               InterlocutorID
-	SelfGender       GenderID
-	TargetGender     GenderID
 	CountConnections int
 	SumDonation      int
 }
 
-func NewInterlocutorFromTelegram(id InterlocutorID, gender GenderID) Interlocutor {
-	return Interlocutor{
+func NewInterlocutorFromTelegram(id InterlocutorID) *Interlocutor {
+	return &Interlocutor{
 		Tag:              formatTag(Telegram, id),
 		Source:           Telegram,
 		ID:               id,
-		SelfGender:       gender,
-		TargetGender:     Any,
 		CountConnections: 0,
 		SumDonation:      0,
 	}
